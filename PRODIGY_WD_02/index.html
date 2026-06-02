@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeTrack - Stopwatch Web Application</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+      --bg: #050816;
+      --card: rgba(255, 255, 255, 0.08);
+      --card-strong: rgba(255, 255, 255, 0.13);
+      --primary: #22d3ee;
+      --secondary: #8b5cf6;
+      --accent: #f59e0b;
+      --danger: #fb7185;
+      --success: #34d399;
+      --text: #ffffff;
+      --muted: #cbd5e1;
+      --border: rgba(255, 255, 255, 0.14);
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.16), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(139, 92, 246, 0.18), transparent 30%),
+        radial-gradient(circle at 50% 95%, rgba(245, 158, 11, 0.12), transparent 32%);
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1150px, 92%);
+      margin: auto;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1150px, 92%);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 999px;
+      background: rgba(5, 8, 22, 0.66);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 14px 50px rgba(0, 0, 0, 0.28);
+      z-index: 999;
+      transition: all 0.35s ease;
+    }
+
+    .navbar.scrolled {
+      top: 0;
+      width: 100%;
+      border-radius: 0;
+      padding: 13px 7%;
+      background: rgba(5, 8, 22, 0.96);
+      border-color: rgba(34, 211, 238, 0.16);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 0 24px rgba(34, 211, 238, 0.35);
+    }
+
+    .logo span:last-child span {
+      color: var(--primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      display: inline-block;
+      padding: 10px 15px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 750;
+      border-radius: 999px;
+      transition: all 0.28s ease;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: #03111d;
+      background: var(--primary);
+      box-shadow: 0 0 22px rgba(34, 211, 238, 0.45);
+    }
+
+    .nav-cta {
+      background: #ffffff !important;
+      color: #050816 !important;
+    }
+
+    .nav-cta:hover {
+      background: var(--primary) !important;
+    }
+
+    .menu-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 135px 0 80px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      margin-bottom: 22px;
+      border-radius: 999px;
+      background: rgba(34, 211, 238, 0.1);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      color: #cffafe;
+      font-weight: 800;
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 6vw, 72px);
+      line-height: 1.04;
+      letter-spacing: -2px;
+      margin-bottom: 22px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--primary), #c4b5fd, var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+      margin-bottom: 30px;
+      max-width: 620px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 34px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 13px 23px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 15px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #03111d;
+      box-shadow: 0 12px 32px rgba(34, 211, 238, 0.25);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 42px rgba(34, 211, 238, 0.4);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: var(--border);
+      color: white;
+    }
+
+    .btn-outline:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      transform: translateY(-4px);
+    }
+
+    .quick-info {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 620px;
+    }
+
+    .quick-card {
+      padding: 17px;
+      border-radius: 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    .quick-card h3 {
+      color: var(--primary);
+      font-size: 26px;
+      margin-bottom: 4px;
+    }
+
+    .quick-card p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    /* STOPWATCH CARD */
+    .stopwatch-card {
+      position: relative;
+      padding: 32px;
+      border-radius: 34px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.05));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .stopwatch-card::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -85px;
+      top: -85px;
+      border-radius: 50%;
+      background: rgba(34, 211, 238, 0.17);
+      filter: blur(8px);
+    }
+
+    .stopwatch-card::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      left: -70px;
+      bottom: -70px;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.18);
+      filter: blur(8px);
+    }
+
+    .stopwatch-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .stopwatch-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #94a3b8;
+    }
+
+    .status-pill.running .status-dot {
+      background: var(--success);
+      box-shadow: 0 0 14px rgba(52, 211, 153, 0.8);
+    }
+
+    .time-display {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 6px;
+      min-height: 125px;
+      margin: 22px 0 8px;
+      padding: 28px 18px;
+      border-radius: 28px;
+      background: rgba(5, 8, 22, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.24);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-main {
+      font-size: clamp(48px, 8vw, 86px);
+      font-weight: 950;
+      letter-spacing: -3px;
+      line-height: 1;
+    }
+
+    .time-ms {
+      color: var(--primary);
+      font-size: clamp(25px, 4vw, 42px);
+      font-weight: 900;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 25px 0;
+    }
+
+    .control-btn {
+      min-height: 54px;
+      border: none;
+      border-radius: 18px;
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.25s ease;
+    }
+
+    .control-btn:hover {
+      transform: translateY(-4px);
+      filter: brightness(1.08);
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      color: #03111d;
+    }
+
+    .pause-btn {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      color: #1f1300;
+    }
+
+    .lap-btn {
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+    }
+
+    .reset-btn {
+      background: linear-gradient(135deg, #fb7185, #e11d48);
+    }
+
+    .control-btn:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      transform: none;
+      filter: grayscale(0.35);
+    }
+
+    .mini-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .mini-box {
+      padding: 15px;
+      border-radius: 18px;
+      background: rgba(5, 8, 22, 0.46);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .mini-box strong {
+      display: block;
+      color: var(--primary);
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .mini-box span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .laps-section {
+      border-radius: 24px;
+      background: rgba(5, 8, 22, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .laps-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .laps-header h3 {
+      font-size: 18px;
+    }
+
+    .clear-laps {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .lap-list {
+      list-style: none;
+      max-height: 235px;
+      overflow-y: auto;
+    }
+
+    .lap-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .lap-list::-webkit-scrollbar-thumb {
+      background: rgba(34, 211, 238, 0.5);
+      border-radius: 999px;
+    }
+
+    .lap-item {
+      display: grid;
+      grid-template-columns: 75px 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 18px;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .lap-item:last-child {
+      border-bottom: none;
+    }
+
+    .lap-number {
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    .lap-time,
+    .lap-split {
+      text-align: right;
+      font-weight: 800;
+    }
+
+    .empty-laps {
+      padding: 26px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* SECTIONS */
+    section:not(.hero) {
+      padding: 95px 0;
+    }
+
+    .section-header {
+      max-width: 760px;
+      text-align: center;
+      margin: 0 auto 52px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(32px, 4vw, 48px);
+      letter-spacing: -1px;
+      margin-bottom: 15px;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .card {
+      padding: 30px;
+      border-radius: 26px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      transition: all 0.35s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      border-color: rgba(34, 211, 238, 0.45);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    .icon {
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: rgba(34, 211, 238, 0.12);
+      color: var(--primary);
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+
+    .card h3 {
+      font-size: 23px;
+      margin-bottom: 12px;
+    }
+
+    .card p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .how-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .steps {
+      display: grid;
+      gap: 18px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 16px;
+      padding: 22px;
+      border-radius: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    .step-number {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #050816;
+      font-weight: 950;
+      font-size: 20px;
+    }
+
+    .step h3 {
+      margin-bottom: 7px;
+    }
+
+    .step p {
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .shortcut-card {
+      padding: 35px;
+      border-radius: 30px;
+      background: linear-gradient(145deg, rgba(34,211,238,0.11), rgba(139,92,246,0.10));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .shortcut-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 15px;
+      border-radius: 18px;
+      background: rgba(5, 8, 22, 0.48);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+    }
+
+    kbd {
+      min-width: 42px;
+      text-align: center;
+      display: inline-block;
+      padding: 7px 11px;
+      border-radius: 10px;
+      color: #050816;
+      background: var(--primary);
+      font-weight: 950;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .tech-box {
+      padding: 28px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .tech-box h3 {
+      font-size: 25px;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .tech-box p {
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .contact-box {
+      max-width: 850px;
+      margin: auto;
+      padding: 40px;
+      border-radius: 32px;
+      text-align: center;
+      background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .contact-box p {
+      color: var(--muted);
+      line-height: 1.75;
+      margin: 15px 0 25px;
+      font-size: 17px;
+    }
+
+    footer {
+      padding: 35px 0;
+      border-top: 1px solid var(--border);
+      background: rgba(5, 8, 22, 0.88);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      transition: color 0.25s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(35px);
+      transition: all 0.7s ease;
+    }
+
+    .reveal.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .how-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cards-grid,
+      .tech-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar,
+      .navbar.scrolled {
+        top: 0;
+        width: 100%;
+        border-radius: 0;
+        padding: 14px 22px;
+      }
+
+      .menu-btn {
+        display: block;
+      }
+
+      .nav-links {
+        position: absolute;
+        top: 66px;
+        left: 0;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        max-height: 0;
+        overflow: hidden;
+        background: rgba(5, 8, 22, 0.98);
+        border-bottom: 1px solid var(--border);
+        transition: max-height 0.35s ease;
+      }
+
+      .nav-links.show {
+        max-height: 430px;
+      }
+
+      .nav-links a {
+        width: 100%;
+        border-radius: 0;
+        padding: 16px 28px;
+      }
+
+      .nav-cta {
+        background: transparent !important;
+        color: var(--muted) !important;
+      }
+
+      .nav-cta:hover {
+        background: var(--primary) !important;
+        color: #050816 !important;
+      }
+
+      .hero {
+        padding-top: 105px;
+      }
+
+      .quick-info,
+      .control-grid,
+      .mini-panel,
+      .cards-grid,
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .time-display {
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+
+      .time-main {
+        font-size: 52px;
+        letter-spacing: -1px;
+      }
+
+      .lap-item {
+        grid-template-columns: 60px 1fr;
+      }
+
+      .lap-split {
+        grid-column: 2;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      section:not(.hero) {
+        padding: 75px 0;
+      }
+
+      .stopwatch-card,
+      .contact-box,
+      .shortcut-card {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <nav class="navbar" id="navbar">
+    <a href="#home" class="logo" aria-label="TimeTrack Home">
+      <span class="logo-icon">⏱</span>
+      <span>Time<span>Track</span></span>
+    </a>
+
+    <button class="menu-btn" id="menuBtn" aria-label="Open navigation menu">☰</button>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home" class="active">Home</a></li>
+      <li><a href="#stopwatch">Stopwatch</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#tech">Technology</a></li>
+      <li><a href="#contact" class="nav-cta">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="container hero-grid">
+      <div class="hero-content reveal show">
+        <div class="badge">⚡ Interactive Stopwatch Web Application</div>
+        <h1>Measure time accurately with a <span class="gradient-text">modern stopwatch</span>.</h1>
+        <p>
+          TimeTrack is a responsive stopwatch website built using HTML, CSS, and JavaScript.
+          Start, pause, reset, and record lap times with a clean user-friendly interface.
+        </p>
+        <div class="hero-actions">
+          <a href="#stopwatch" class="btn btn-primary">Open Stopwatch →</a>
+          <a href="#features" class="btn btn-outline">View Features</a>
+        </div>
+        <div class="quick-info">
+          <div class="quick-card">
+            <h3>ms</h3>
+            <p>Millisecond Accuracy</p>
+          </div>
+          <div class="quick-card">
+            <h3>∞</h3>
+            <p>Unlimited Laps</p>
+          </div>
+          <div class="quick-card">
+            <h3>100%</h3>
+            <p>Responsive Design</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stopwatch-card reveal show" id="stopwatch">
+        <div class="stopwatch-inner">
+          <div class="stopwatch-top">
+            <div>
+              <h2>Stopwatch</h2>
+              <p style="color:#cbd5e1; margin-top:6px;">Track time intervals and record lap history.</p>
+            </div>
+            <div class="status-pill" id="statusPill">
+              <span class="status-dot"></span>
+              <span id="statusText">Ready</span>
+            </div>
+          </div>
+
+          <div class="time-display" aria-live="polite">
+            <span class="time-main" id="mainTime">00:00:00</span>
+            <span class="time-ms" id="msTime">.000</span>
+          </div>
+
+          <div class="control-grid">
+            <button class="control-btn start-btn" id="startBtn">Start</button>
+            <button class="control-btn pause-btn" id="pauseBtn" disabled>Pause</button>
+            <button class="control-btn lap-btn" id="lapBtn" disabled>Lap</button>
+            <button class="control-btn reset-btn" id="resetBtn">Reset</button>
+          </div>
+
+          <div class="mini-panel">
+            <div class="mini-box">
+              <strong id="lapCount">0</strong>
+              <span>Total Laps</span>
+            </div>
+            <div class="mini-box">
+              <strong id="bestLap">--</strong>
+              <span>Best Lap</span>
+            </div>
+            <div class="mini-box">
+              <strong id="lastLap">--</strong>
+              <span>Last Lap</span>
+            </div>
+          </div>
+
+          <div class="laps-section">
+            <div class="laps-header">
+              <h3>Lap Times</h3>
+              <button class="clear-laps" id="clearLapsBtn">Clear Laps</button>
+            </div>
+            <ul class="lap-list" id="lapList">
+              <li class="empty-laps">No laps recorded yet. Click <strong>Lap</strong> while the stopwatch is running.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2>Application Features</h2>
+        <p>The stopwatch website includes all important functions required for a proper interactive web application.</p>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card reveal">
+          <div class="icon">▶</div>
+          <h3>Start Timer</h3>
+          <p>Begin the stopwatch instantly and display live time updates with hours, minutes, seconds, and milliseconds.</p>
+        </div>
+        <div class="card reveal">
+          <div class="icon">⏸</div>
+          <h3>Pause Timer</h3>
+          <p>Pause the running timer without clearing the recorded time, then continue again whenever needed.</p>
+        </div>
+        <div class="card reveal">
+          <div class="icon">↻</div>
+          <h3>Reset Timer</h3>
+          <p>Reset the stopwatch back to zero and clear the running state for a fresh new timing session.</p>
+        </div>
+        <div class="card reveal">
+          <div class="icon">🏁</div>
+          <h3>Lap Recording</h3>
+          <p>Record multiple lap times while the stopwatch is running and view total time and split duration.</p>
+        </div>
+        <div class="card reveal">
+          <div class="icon">⌨</div>
+          <h3>Keyboard Shortcuts</h3>
+          <p>Use keyboard controls for faster interaction, making the application more convenient and practical.</p>
+        </div>
+        <div class="card reveal">
+          <div class="icon">📱</div>
+          <h3>Responsive Layout</h3>
+          <p>The website works properly on desktop, laptop, tablet, and mobile screens with a modern design.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="container how-grid">
+      <div class="reveal">
+        <div class="section-header" style="text-align:left; margin:0 0 30px;">
+          <h2>How It Works</h2>
+          <p>The application uses simple front-end logic to calculate elapsed time and update the display continuously.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div>
+              <h3>HTML Structure</h3>
+              <p>HTML creates the stopwatch display, control buttons, lap list, feature sections, and website layout.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div>
+              <h3>CSS Styling</h3>
+              <p>CSS designs the page with responsive layout, fixed navigation, cards, gradients, hover effects, and animations.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div>
+              <h3>JavaScript Logic</h3>
+              <p>JavaScript handles start, pause, reset, lap recording, time formatting, active links, and keyboard shortcuts.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shortcut-card reveal">
+        <h2>Keyboard Shortcuts</h2>
+        <p style="color:#cbd5e1; line-height:1.7; margin-top:10px;">Use these keys to control the stopwatch quickly without clicking buttons.</p>
+
+        <div class="shortcut-list">
+          <div class="shortcut-item">
+            <span>Start or Pause stopwatch</span>
+            <kbd>Space</kbd>
+          </div>
+          <div class="shortcut-item">
+            <span>Record lap time</span>
+            <kbd>L</kbd>
+          </div>
+          <div class="shortcut-item">
+            <span>Reset stopwatch</span>
+            <kbd>R</kbd>
+          </div>
+          <div class="shortcut-item">
+            <span>Clear all laps</span>
+            <kbd>C</kbd>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECHNOLOGY -->
+  <section id="tech">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2>Technologies Used</h2>
+        <p>This project is built using core web development technologies, so it runs directly in any modern browser.</p>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-box reveal">
+          <h3>HTML</h3>
+          <p>Used to structure the stopwatch display, buttons, lap table, sections, navigation, and footer.</p>
+        </div>
+        <div class="tech-box reveal">
+          <h3>CSS</h3>
+          <p>Used for styling, responsive design, hover effects, scroll effects, animations, and modern UI layout.</p>
+        </div>
+        <div class="tech-box reveal">
+          <h3>JavaScript</h3>
+          <p>Used to implement timer logic, start, pause, reset, lap calculations, and interactive behavior.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <div class="contact-box reveal">
+        <h2>Ready to Use</h2>
+        <p>
+          This stopwatch application is a complete front-end project. Save the code as
+          <strong>index.html</strong>, open it in your browser, and use it directly.
+          You can also submit it as a web development task or internship project.
+        </p>
+        <a href="#stopwatch" class="btn btn-primary">Try Stopwatch Again</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container footer-content">
+      <p>© 2026 TimeTrack Stopwatch Application. All Rights Reserved.</p>
+      <div class="footer-links">
+        <a href="#home">Home</a>
+        <a href="#stopwatch">Stopwatch</a>
+        <a href="#features">Features</a>
+        <a href="#tech">Technology</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const navbar = document.getElementById("navbar");
+    const menuBtn = document.getElementById("menuBtn");
+    const navLinks = document.getElementById("navLinks");
+    const navItems = document.querySelectorAll(".nav-links a");
+    const sections = document.querySelectorAll("section[id]");
+    const revealElements = document.querySelectorAll(".reveal");
+
+    const mainTime = document.getElementById("mainTime");
+    const msTime = document.getElementById("msTime");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const lapBtn = document.getElementById("lapBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const clearLapsBtn = document.getElementById("clearLapsBtn");
+    const lapList = document.getElementById("lapList");
+    const lapCount = document.getElementById("lapCount");
+    const bestLap = document.getElementById("bestLap");
+    const lastLap = document.getElementById("lastLap");
+    const statusPill = document.getElementById("statusPill");
+    const statusText = document.getElementById("statusText");
+
+    let startTime = 0;
+    let elapsedTime = 0;
+    let timerInterval = null;
+    let isRunning = false;
+    let laps = [];
+    let previousLapElapsed = 0;
+
+    function formatTime(milliseconds) {
+      const hours = Math.floor(milliseconds / 3600000);
+      const minutes = Math.floor((milliseconds % 3600000) / 60000);
+      const seconds = Math.floor((milliseconds % 60000) / 1000);
+      const ms = Math.floor(milliseconds % 1000);
+
+      return {
+        main: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`,
+        milli: `.${String(ms).padStart(3, "0")}`
+      };
+    }
+
+    function displayTime(milliseconds) {
+      const formatted = formatTime(milliseconds);
+      mainTime.textContent = formatted.main;
+      msTime.textContent = formatted.milli;
+    }
+
+    function setStatus(status) {
+      statusText.textContent = status;
+
+      if (status === "Running") {
+        statusPill.classList.add("running");
+      } else {
+        statusPill.classList.remove("running");
+      }
+    }
+
+    function updateButtons() {
+      startBtn.disabled = isRunning;
+      pauseBtn.disabled = !isRunning;
+      lapBtn.disabled = !isRunning;
+    }
+
+    function startStopwatch() {
+      if (isRunning) return;
+
+      startTime = Date.now() - elapsedTime;
+      timerInterval = setInterval(() => {
+        elapsedTime = Date.now() - startTime;
+        displayTime(elapsedTime);
+      }, 10);
+
+      isRunning = true;
+      setStatus("Running");
+      updateButtons();
+    }
+
+    function pauseStopwatch() {
+      if (!isRunning) return;
+
+      clearInterval(timerInterval);
+      timerInterval = null;
+      isRunning = false;
+      setStatus("Paused");
+      updateButtons();
+    }
+
+    function resetStopwatch() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      startTime = 0;
+      elapsedTime = 0;
+      previousLapElapsed = 0;
+      isRunning = false;
+      displayTime(0);
+      setStatus("Ready");
+      updateButtons();
+    }
+
+    function createEmptyLapMessage() {
+      lapList.innerHTML = `<li class="empty-laps">No laps recorded yet. Click <strong>Lap</strong> while the stopwatch is running.</li>`;
+    }
+
+    function updateLapStats() {
+      lapCount.textContent = laps.length;
+
+      if (laps.length === 0) {
+        bestLap.textContent = "--";
+        lastLap.textContent = "--";
+        return;
+      }
+
+      const shortestLap = laps.reduce((best, lap) => lap.split < best.split ? lap : best, laps[0]);
+      const latestLap = laps[0];
+
+      bestLap.textContent = formatTime(shortestLap.split).main;
+      lastLap.textContent = formatTime(latestLap.split).main;
+    }
+
+    function renderLaps() {
+      if (laps.length === 0) {
+        createEmptyLapMessage();
+        updateLapStats();
+        return;
+      }
+
+      lapList.innerHTML = laps.map(lap => {
+        const total = formatTime(lap.total);
+        const split = formatTime(lap.split);
+
+        return `
+          <li class="lap-item">
+            <span class="lap-number">Lap ${lap.number}</span>
+            <span class="lap-time">${total.main}${total.milli}</span>
+            <span class="lap-split">+${split.main}${split.milli}</span>
+          </li>
+        `;
+      }).join("");
+
+      updateLapStats();
+    }
+
+    function recordLap() {
+      if (!isRunning) return;
+
+      const splitTime = elapsedTime - previousLapElapsed;
+      previousLapElapsed = elapsedTime;
+
+      laps.unshift({
+        number: laps.length + 1,
+        total: elapsedTime,
+        split: splitTime
+      });
+
+      renderLaps();
+    }
+
+    function clearLaps() {
+      laps = [];
+      previousLapElapsed = elapsedTime;
+      renderLaps();
+    }
+
+    startBtn.addEventListener("click", startStopwatch);
+    pauseBtn.addEventListener("click", pauseStopwatch);
+    resetBtn.addEventListener("click", resetStopwatch);
+    lapBtn.addEventListener("click", recordLap);
+    clearLapsBtn.addEventListener("click", clearLaps);
+
+    document.addEventListener("keydown", event => {
+      const activeTag = document.activeElement.tagName.toLowerCase();
+      if (activeTag === "input" || activeTag === "textarea") return;
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        isRunning ? pauseStopwatch() : startStopwatch();
+      }
+
+      if (event.key.toLowerCase() === "l") {
+        recordLap();
+      }
+
+      if (event.key.toLowerCase() === "r") {
+        resetStopwatch();
+      }
+
+      if (event.key.toLowerCase() === "c") {
+        clearLaps();
+      }
+    });
+
+    function updateNavbar() {
+      if (window.scrollY > 60) {
+        navbar.classList.add("scrolled");
+      } else {
+        navbar.classList.remove("scrolled");
+      }
+    }
+
+    function updateActiveLink() {
+      let current = "home";
+
+      sections.forEach(section => {
+        const top = section.offsetTop - 170;
+        const height = section.offsetHeight;
+
+        if (window.scrollY >= top && window.scrollY < top + height) {
+          current = section.getAttribute("id");
+        }
+      });
+
+      navItems.forEach(link => {
+        link.classList.remove("active");
+        if (link.getAttribute("href") === `#${current}`) {
+          link.classList.add("active");
+        }
+      });
+    }
+
+    function revealOnScroll() {
+      revealElements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const revealPoint = 115;
+
+        if (elementTop < window.innerHeight - revealPoint) {
+          element.classList.add("show");
+        }
+      });
+    }
+
+    window.addEventListener("scroll", () => {
+      updateNavbar();
+      updateActiveLink();
+      revealOnScroll();
+    });
+
+    menuBtn.addEventListener("click", () => {
+      navLinks.classList.toggle("show");
+      menuBtn.textContent = navLinks.classList.contains("show") ? "✕" : "☰";
+    });
+
+    navItems.forEach(link => {
+      link.addEventListener("click", () => {
+        navLinks.classList.remove("show");
+        menuBtn.textContent = "☰";
+      });
+    });
+
+    displayTime(0);
+    createEmptyLapMessage();
+    updateButtons();
+    updateNavbar();
+    updateActiveLink();
+    revealOnScroll();
+  </script>
+</body>
+</html>
